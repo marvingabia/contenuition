@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gabia Modal Form - Fresh Input</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+    }
+    .instructions {
+      background: #eef7ff;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #333;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .modal-header h2 {
+      margin: 0 0 20px 0;
+      color: #333;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+    }
+    input,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    input:focus,
+    select:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+    .btn {
+      background: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+    .btn:hover {
+      background: #45a049;
+    }
+
+    /* === Shake Animation === */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
+
+    /* === Error Input Highlight === */
+    input.error, select.error {
+      border: 2px solid #f44336 !important;
+      background-color: #ffebee;
+    }
+
+    /* Editable Display Panel */
+    .display-panel {
+      margin: 30px auto;
+      padding: 20px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      max-width: 500px;
+      text-align: left;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .display-panel h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .display-panel p {
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    .display-panel strong {
+      color: #333;
+    }
+    .editable {
+      cursor: pointer;
+      color: #0066cc;
+      text-decoration: underline;
+    }
+    .editable:hover {
+      color: #0055bb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gabia Modal Form</h1>
+    <p class="instructions">
+      <strong>Shortcuts:</strong><br>
+      Ctrl+Alt+N = Open Modal | Enter = Navigate | Esc = Close Modal | Alt+1 = Clear All
+    </p>
+
+    <!-- Editable Display Panel -->
+    <div id="displayPanel" class="display-panel" style="display: none;">
+      <h3>Submitted Data:</h3>
+      <p><strong>Name:</strong> <span id="displayName" class="editable">-</span></p>
+      <p><strong>Age:</strong> <span id="displayAge" class="editable">-</span></p>
+      <p><strong>Gender:</strong> <span id="displayGender" class="editable">-</span></p>
+    </div>
+  </div>
+
+  <!-- Modal Form -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>User Information</h2>
+      </div>
+      <form id="userForm" novalidate>
+        <div class="form-group">
+          <label for="name">Name:</label>
+          <input type="text" id="name" name="name" autocomplete="off" placeholder="Enter your name" />
+        </div>
+        <div class="form-group">
+          <label for="age">Age:</label>
+          <input 
+            type="number" 
+            id="age" 
+            name="age" 
+            min="1" 
+            max="120" 
+            placeholder="Enter age (1-120)" 
+            autocomplete="off"
+            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+          />
+        </div>
+        <div class="form-group">
+          <label for="gender">Gender:</label>
+          <select id="gender" name="gender">
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="otherGenderGroup" style="display: none;">
+          <label for="otherGender">Please specify:</label>
+          <input type="text" id="otherGender" name="otherGender" placeholder="Enter your gender" autocomplete="off" />
+        </div>
+
+        <button type="submit" class="btn">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const modal = document.getElementById("myModal");
+    const nameInput = document.getElementById("name");
+    const ageInput = document.getElementById("age");
+    const genderSelect = document.getElementById("gender");
+    const otherGenderGroup = document.getElementById("otherGenderGroup");
+    const otherGenderInput = document.getElementById("otherGender");
+
+    const displayName = document.getElementById("displayName");
+    const displayAge = document.getElementById("displayAge");
+    const displayGender = document.getElementById("displayGender");
+    const displayPanel = document.getElementById("displayPanel");
+
+    const LS_KEY = "formData";
+
+    // === Load from localStorage (only for display) ===
+    function loadFormData() {
+      try {
+        const data = localStorage.getItem(LS_KEY);
+        return data ? JSON.parse(data) : null;
+      } catch (e) {
+        console.error("Error reading localStorage:", e);
+        return null;
+      }
+    }
+
+    // === Save to localStorage ===
+    function saveFormData(data) {
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.error("Error saving to localStorage:", e);
+      }
+    }
+
+    // === Update Display Panel ===
+    function updateDisplay(data) {
+      displayName.textContent = data.name || "-";
+      displayAge.textContent = data.age || "-";
+      const genderDisplay = data.gender === "other" ? data.otherGender : data.gender;
+      displayGender.textContent = genderDisplay || "-";
+    }
+
+    // === Open Modal (Always empty fields) ===
+    function openModal() {
+      // Always reset form to empty
+      nameInput.value = "";
+      ageInput.value = "";
+      genderSelect.value = "";
+      otherGenderInput.value = "";
+      otherGenderGroup.style.display = "none";
+
+      // Remove error styles
+      [nameInput, ageInput, genderSelect, otherGenderInput].forEach(input => {
+        input.classList.remove("error");
+      });
+
+      modal.style.display = "flex";
+      setTimeout(() => nameInput.focus(), 500); // Focus after render
+    }
+
+    // === Handle Gender Change ===
+    genderSelect.addEventListener("change", () => {
+      if (genderSelect.value === "other") {
+        otherGenderGroup.style.display = "block";
+        setTimeout(() => otherGenderInput.focus(), 10);
+      } else {
+        otherGenderGroup.style.display = "none";
+      }
+      if (genderSelect.value) {
+        genderSelect.classList.remove("error");
+      }
+    });
+
+    // === Get Form Values ===
+    function getFormValues() {
+      return {
+        name: nameInput.value.trim(),
+        age: ageInput.value,
+        gender: genderSelect.value,
+        otherGender: otherGenderInput.value.trim()
+      };
+    }
+
+    // === Form Submission with Validation & Shake ===
+    document.getElementById("userForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      // Remove previous errors
+      [nameInput, ageInput, genderSelect, otherGenderInput].forEach(input => {
+        input.classList.remove("error");
+      });
+
+      const name = nameInput.value.trim();
+      const age = ageInput.value;
+      const gender = genderSelect.value;
+
+      const errors = [];
+
+      if (!name) {
+        nameInput.classList.add("error");
+        errors.push("Name");
+      }
+      if (!age || isNaN(age) || age < 1 || age > 120) {
+        ageInput.classList.add("error");
+        errors.push("Age");
+      }
+      if (!gender) {
+        genderSelect.classList.add("error");
+        errors.push("Gender");
+      }
+      if (gender === "other" && !otherGenderInput.value.trim()) {
+        otherGenderInput.classList.add("error");
+        errors.push("Other Gender");
+      }
+
+      if (errors.length > 0) {
+        // Shake effect
+        const modalContent = document.querySelector(".modal-content");
+        modalContent.classList.remove("shake");
+        void modalContent.offsetWidth; // Trigger reflow
+        modalContent.classList.add("shake");
+
+        alert(`Please fill in: ${errors.join(", ")}`);
+        return;
+      }
+
+      // ✅ Valid data: Save and update display
+      const data = getFormValues();
+      saveFormData(data);
+      updateDisplay(data);
+      displayPanel.style.display = "block";
+      modal.style.display = "none";
+    });
+
+    // === Make Display Fields Editable ===
+    displayName.addEventListener("click", () => {
+      const newText = prompt("Edit Name:", displayName.textContent);
+      if (newText !== null && newText.trim() !== "" && newText !== "-") {
+        displayName.textContent = newText.trim();
+        const data = loadFormData() || {};
+        saveFormData({ ...data, name: newText.trim() });
+      }
+    });
+
+    displayAge.addEventListener("click", () => {
+      const current = displayAge.textContent === "-" ? "" : displayAge.textContent;
+      const newText = prompt("Edit Age:", current);
+      if (newText !== null && !isNaN(newText) && newText >= 1 && newText <= 120) {
+        displayAge.textContent = newText;
+        const data = loadFormData() || {};
+        saveFormData({ ...data, age: newText });
+      } else {
+        alert("Please enter a valid age (1-120)");
+      }
+    });
+
+    displayGender.addEventListener("click", () => {
+      const current = displayGender.textContent === "-" ? "" : displayGender.textContent;
+      const newText = prompt("Edit Gender:", current);
+      if (newText !== null && newText.trim() !== "") {
+        displayGender.textContent = newText.trim();
+        const data = loadFormData() || {};
+        // Try to map to male/female/other
+        let genderVal = "other";
+        if (["male", "female"].includes(newText.trim().toLowerCase())) {
+          genderVal = newText.trim().toLowerCase();
+        }
+        saveFormData({ ...data, gender: genderVal, otherGender: newText.trim() });
+      }
+    });
+
+    // === On Page Load: Restore display only (not form) ===
+    window.addEventListener("load", () => {
+      const data = loadFormData();
+      if (data && data.name) {
+        updateDisplay(data);
+        displayPanel.style.display = "block";
+      }
+    });
+
+    // === Keyboard Shortcuts ===
+    document.addEventListener("keydown", (e) => {
+      // Ctrl+Alt+N = Open Modal
+      if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        openModal();
+      }
+
+      // Esc = Close modal or clear field
+      if (e.key === "Escape") {
+        if (modal.style.display === "flex") {
+          modal.style.display = "none";
+        }
+      }
+
+      // Alt+1 = Clear All Data
+      if (e.altKey && e.key === "1") {
+        e.preventDefault();
+        if (confirm("Clear all saved data?")) {
+          localStorage.removeItem(LS_KEY);
+          displayPanel.style.display = "none";
+          updateDisplay({});
+        }
+      }
+    });
+
+    // === Handle Enter Key to Move to Next Field ===
+    document.addEventListener('keydown', function(e) {
+      const activeElement = document.activeElement;
+      const formElements = [nameInput, ageInput, genderSelect, otherGenderInput];
+
+      if (!formElements.includes(activeElement)) return;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const currentIndex = formElements.indexOf(activeElement);
+        const nextElement = formElements[currentIndex + 1];
+
+        if (nextElement) {
+          if (nextElement === otherGenderInput && otherGenderGroup.style.display === "none") {
+            document.querySelector('.btn').focus();
+          } else {
+            nextElement.focus();
+            if (typeof nextElement.select === 'function') {
+              nextElement.select();
+            }
+          }
+        } else {
+          document.getElementById('userForm').requestSubmit();
+        }
+      }
+    });
+
+    // === Auto-remove error on input ===
+    [nameInput, ageInput, otherGenderInput].forEach(input => {
+      input.addEventListener("input", () => {
+        if (input.value.trim() !== "") {
+          input.classList.remove("error");
+        }
+      });
+    });
+
+    genderSelect.addEventListener("change", () => {
+      if (genderSelect.value) {
+        genderSelect.classList.remove("error");
+      }
+    });
+  </script>
+</body>
+</html>
